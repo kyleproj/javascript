@@ -1,0 +1,195 @@
+<canvas id="snake"></canvas>
+<script>
+var canvas_context;
+var canvas;
+var player_width=15;
+var board_size=20
+var board_height=player_width*board_size;
+var board_width=player_width*board_size;
+var player_x=0;
+var player_y=board_height/2;
+var player_height=player_width;
+var acceleration=player_width;
+var player_xv=acceleration;
+var player_yv=0;
+var game_hz=20
+var game_speed=1000/game_hz;
+var apple_x=0
+var apple_y=0
+var apple_width=player_width
+var apple_height=player_width
+var score=0
+var snake=[]
+var dir=3
+function add_snake(){
+    vec=[player_x, player_y]
+    snake.unshift(vec);
+    return
+
+    switch (dir){
+        case 1:
+           vec=[player_x, player_y+player_height]
+           snake.unshift(vec);
+           break
+        case 2:
+           vec=[player_x, player_y-player_height]
+           snake.unshift(vec);
+           break
+        case 3:
+           vec=[player_x-player_width, player_y]
+           snake.unshift(vec);
+           break
+        case 4:
+           vec=[player_x+player_width, player_y]
+           snake.unshift(vec);
+           break
+    }
+}
+
+function update_snake(){
+    vec=[player_x, player_y]
+    snake.unshift(vec);
+    snake.pop();
+}
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function set_apple(){
+    apple_x=getRandomInt(apple_width, board_width-apple_width);
+    apple_y=getRandomInt(apple_height, board_height-apple_height);
+}
+
+
+function draw(x, y, width, height, colour){
+    canvas_context.fillStyle=colour
+    canvas_context.fillRect(x, y, width, height);
+}
+
+function set_player_pos(x, y){
+    console.log("set_player_pos(x, y)");
+    temp_x=x;
+    temp_y=y;
+    if(x>=board_width){
+        temp_x=0
+    }
+    if(y>=board_height){
+        temp_y=0
+    }
+    if(x<=0-player_width){
+        temp_x=board_width
+    }
+    if(y<=0-player_height){
+        temp_y=board_height
+    }
+    player_x=temp_x;
+    player_y=temp_y;
+    console.log("x:" + player_x + " y:" + player_y);
+}
+function set_player_vel(xv, yv){
+    player_xv=xv;
+    player_yv=yv;
+}
+
+function init_elements(){
+    console.log("init_elements()");
+    canvas=document.getElementById("snake");
+    canvas_context=canvas.getContext("2d");
+}
+
+function init_canvas(){
+    console.log("init_canvas()");
+    canvas.width=board_width;
+    canvas.height=board_height;
+    draw(0, 0, board_width, board_height, "black");
+}
+
+function init_events(){
+    console.log("init_events()");
+    document.addEventListener("keydown", keypress_event); 
+}
+
+function keypress_event(event){
+    console.log("keypress_event()");
+    key=event.keyCode;
+    switch (key){
+        //up
+        case 38:
+            set_player_vel(0, -1*acceleration);
+            dir=1
+            break;
+        //down
+        case 40:
+            set_player_vel(0, acceleration);
+            dir=2
+            break;
+        //left
+        case 37:
+            set_player_vel(-1*acceleration, 0);
+            dir=3
+            break;
+        //right
+        case 39:
+            set_player_vel(acceleration, 0);
+            dir=4
+            break;
+    }
+    console.log("Key Pressed: " + key);
+}
+
+function check_intersects(){
+
+    //apple
+    if (player_x+apple_width > apple_x && player_x-apple_width < apple_x && player_y+apple_height > apple_y && player_y-apple_height < apple_y){
+        score++;
+        add_snake();
+        set_apple();
+    }
+
+    //player
+    if ( score > 0 ){
+        for(var i = 1; i <= score; i++){
+            sx=snake[i][0]
+            sy=snake[i][1]
+            if (player_x+player_width > sx && player_x-player_width < sx && player_y+player_height > sy && player_y-player_height < sy){
+                snake=[]
+                add_snake();
+                score=0
+            }
+        }
+    }
+
+}
+
+function update(){
+
+    set_player_pos(player_x+player_xv, player_y+player_yv);
+
+    check_intersects();
+
+    //background
+    draw(0, 0, board_height, board_width, "black");
+
+    update_snake();
+    //player
+
+    for(var i = 0; i <= score; i++){
+        draw(snake[i][0], snake[i][1], player_width, player_height, "white");
+    }
+
+    //apple
+    draw(apple_x, apple_y, apple_width, apple_height, "red");
+}
+
+function start () {
+    console.log("start();");
+    init_elements();
+    init_canvas();
+    init_events();
+    add_snake();
+    set_apple();
+    setInterval(update, game_speed);
+}
+start();
+</script>

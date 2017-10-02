@@ -1,0 +1,352 @@
+<html>
+<head>
+<style>
+canvas {
+    #padding-left: 0;
+    #padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+} 
+h1 {
+	text-align:center;
+	font-size: 20px;
+	font-family: "Verdana", Sans-serif;
+}
+</style>
+</head>
+<body>
+<canvas id="automata" width="735" height="735"></canvas>
+</body>
+
+<script>
+env_size=105
+step=7
+size=6
+game_rate=1000/15
+var env=new Array(env_size)
+var next_env=env
+var chance=1
+colours=6
+var canvasContext;
+var canv;
+var mouse_down=false
+var mdID=0
+var mouse_event;
+function init_board(){
+	var b=new Array(env_size)
+	for (var i = 0; i < env_size; i++){
+		b[i] = new Array(env_size);
+		for (var j = 0; j < env_size; j++){
+			b[i][j] = 0;
+		}
+	}
+	return b;
+}
+
+function mouse_down_evt(event){
+	if (!mouse_down) {
+		mouse_down=true
+	}
+}
+
+function mouse_up_evt(event){
+	if (mouse_down){
+		mouse_down=false
+	}
+}
+
+window.onload=function() {
+	canv=document.getElementById("automata");
+	canvasContext=canv.getContext("2d");
+	env=init_board();
+	next_env=init_board();
+	display();
+	document.addEventListener("mousemove", mouse_pos);
+	document.addEventListener("mousedown", mouse_down_evt);
+	document.addEventListener("mouseup", mouse_up_evt);
+	setInterval(game,game_rate);
+}
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function seed_cell(i, j){
+	c=getRandomInt(1, colours);
+	env[i][j]=c
+	ns=getRandomInt(2, 7);
+	nc=0
+	var na = new Array(8)
+	for (var k=0; k < 8; k++){
+		na[k]=0;
+	}
+	while (nc<ns){
+		x=getRandomInt(0, 7);
+		if (na[x]==1){
+			continue
+		}
+		na[x]=1
+		switch(x){
+			case 0:
+				env[i+1][j]=c;
+				break
+			case 1:
+				env[i-1][j]=c;
+				break
+			case 2:
+				env[i][j+1]=c;							
+				break
+			case 3:
+				env[i][j-1]=c;							
+				break
+			case 4:
+				env[i+1][j+1]=c;							
+				break
+			case 5:
+				env[i-1][j-1]=c;							
+				break
+			case 6:
+				env[i+1][j-1]=c;							
+				break
+			case 7:
+				env[i-1][j+1]=c;							
+				break
+		}
+		nc++
+	}
+}
+function seed(){
+	created=0
+	created_total=5
+	while (created<created_total){
+		for (var i = 1; i < env_size-1 && created<created_total; i++){
+			for (var j = 1; j < env_size-1 && created<created_total; j++){
+				if (getRandomInt(1, env_size*env_size) == 1){
+					c=getRandomInt(1, colours);
+					env[i][j]=c
+					ns=getRandomInt(2, 7);
+					nc=0
+					var na = new Array(8)
+					for (var k=0; k < 8; k++){
+						na[k]=0;
+					}
+					while (nc<ns){
+						x=getRandomInt(0, 7);
+						if (na[x]==1){
+							continue
+						}
+						na[x]=1
+						switch(x){
+							case 0:
+								env[i+1][j]=c;
+								break
+							case 1:
+								env[i-1][j]=c;
+								break
+							case 2:
+								env[i][j+1]=c;							
+								break
+							case 3:
+								env[i][j-1]=c;							
+								break
+							case 4:
+								env[i+1][j+1]=c;							
+								break
+							case 5:
+								env[i-1][j-1]=c;							
+								break
+							case 6:
+								env[i+1][j-1]=c;							
+								break
+							case 7:
+								env[i-1][j+1]=c;							
+								break
+						}
+						nc++
+					}
+					created++
+				}
+			}
+		}
+	}
+}
+function mouse_pos(event) {
+	if(mouse_down){
+		var rect = canv.getBoundingClientRect();
+		x=event.clientX - rect.left
+		y=event.clientY - rect.top
+		x=Math.round(x/(step+1))
+		y=Math.round(y/(step+1))
+		//env[x][y]=1
+		seed_cell(x, y)
+	}
+}
+function display(){
+	x=1;
+	for (var i = 0; i < env_size; i++) {
+		y=1;
+		for (var j = 0; j < env_size; j++) {
+			c="white"
+			switch(env[i][j]){
+				case 1:
+					c="red"
+					break
+				case 2:
+					c="green"
+					break
+				case 3:
+					c="brown"
+					break
+				case 4:
+					c="orange"
+					break
+				case 5:
+					c="aqua"
+					break
+			}
+			canvasContext.fillStyle="grey"
+			canvasContext.fillRect(x, y, step, step);
+			canvasContext.fillStyle=c
+			canvasContext.fillRect(x, y, size, size);
+			y=y+step+1;
+		}
+		x=x+step+1;
+	}
+}
+function game(){
+	for (var i = 0; i < env_size; i++){
+		for (var j = 0; j < env_size; j++){
+			nebs=0;
+			var cols = new Array(colours)
+			for (var k = 0; k < colours; k++){
+				cols[k]=0;
+			}
+			if (i < env_size-1){
+				cols[env[i+1][j]]++
+				if (env[i+1][j]>0){
+					nebs++
+				}
+			} 
+			if ( i == env_size-1 ){
+				cols[env[0][j]]++
+				if (env[0][j]>0) {
+					nebs++
+				}				
+			}
+			if (i > 0) {
+				cols[env[i-1][j]]++
+				if (env[i-1][j]>0){
+					nebs++
+				}
+			}
+			if ( i == 0 ){
+				cols[env[env_size-1][j]]++
+				if (env[env_size-1][j] >0) {
+					nebs++
+				}				
+			}
+			if (j < env_size-1){
+				cols[env[i][j+1]]++
+				if (env[i][j+1]>0){
+					nebs++
+				}
+			}
+			if (j == env_size-1){
+				cols[env[i][0]]++
+				if (env[i][0]>0){
+					nebs++
+				}
+			}
+			if (j > 0){
+				cols[env[i][j-1]]++
+				if (env[i][j-1]>0){
+					nebs++
+				}
+			}
+			if (j == 0){
+				cols[env[i][env_size-1]]++
+				if (env[i][env_size-1]>0){
+					nebs++
+				}
+			}
+			if ( i < env_size-1 && j < env_size-1){
+				cols[env[i+1][j+1]]++
+				if (env[i+1][j+1]>0){
+					nebs++
+				}
+			}
+			if ( i == env_size-1 && j == env_size-1){
+				cols[env[0][0]]++
+				if (env[0][0]>0){
+					nebs++
+				}
+			}
+			if ( i > 0 && j > 0){
+				cols[env[i-1][j-1]]++
+				if (env[i-1][j-1]>0){
+					nebs++
+				}
+			}
+			if ( i == 0 && j == 0){
+				cols[env[env_size-1][env_size-1]]++
+				if (env[env_size-1][env_size-1]>0){
+					nebs++
+				}
+			}
+			if ( i < env_size-1 && j > 0){
+				cols[env[i+1][j-1]]++
+				if (env[i+1][j-1]>0){
+					nebs++
+				}
+			}
+			if ( i == env_size-1 && j == 0){
+				cols[env[0][env_size]]++
+				if (env[0][env_size]>0){
+					nebs++
+				}
+			}
+			if ( i > 0 && j < env_size - 1){
+				cols[env[i-1][j+1]]++
+				if (env[i-1][j+1]>0){
+					nebs++
+				}
+			}
+			if ( i == 0 && j == env_size - 1){
+				cols[env[env_size-1][0]]++
+				if (env[env_size-1][0]>0){
+					nebs++
+				}
+			}
+			t=0
+			for (var k = 1; k < colours; k++){
+				if (cols[k]>t){
+					t=k
+				}
+			}
+			if (env[i][j] > 0 && nebs < 2) {
+				next_env[i][j]=0;
+			}
+			else if (env[i][j] > 0 && (nebs == 2 || nebs == 3)){
+				next_env[i][j]=t;
+				if (getRandomInt(0, 100) == 1){
+					seed_cell(i,j)
+				}
+			} 
+			else if (env[i][j] > 0 && nebs > 3){
+				next_env[i][j]=0;
+			} 
+			else if (env[i][j] == 0 && nebs == 3) {
+				next_env[i][j]=t;
+			}
+		}
+	}
+	
+	for (var i = 0; i < env_size; i++) {
+		for (var j = 0; j < env_size; j++) {
+			env[i][j]=next_env[i][j];
+		}
+	}
+	display();
+}
+</script>
+</html>
+  
